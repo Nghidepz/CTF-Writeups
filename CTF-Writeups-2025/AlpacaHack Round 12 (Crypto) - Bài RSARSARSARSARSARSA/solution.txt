@@ -13,7 +13,10 @@ Flag được cho vào hàm đó để biến thành một số nguyên lớn nh
 
 2. Khai thác
 
-Ta có dòng code f = bytes_to_long(b'ABC'), b'ABC' có độ dài là 3 bytes. Thì để tạo ra b'ABCABC' chúng ta phải nối b'ABC' vào sau b'ABC'. Biểu diễn về mặt toán học, giá trị của b'ABC' đầu tiên sẽ được dịch qua trái 3 byte để tạo ra 3 byte trống phía sau, 3 byte = 24 bits. Do đó, giá trị của b'ABCABC' là m = f * 2²⁴ + f. Quay lại bài toán của chúng ta là flag có độ dài là 26 bytes = 208 bits. Khi ta nối chuỗi flag vào một chuỗi khác, chúng ta đang dịch chuỗi cũ một khoảng bằng độ dài của flag, tức là dịch qua 26 bytes.
+Ta có dòng code f = bytes_to_long(b'ABC'), b'ABC' có độ dài là 3 bytes. Thì để tạo ra b'ABCABC' chúng ta phải nối b'ABC' vào sau b'ABC'.
+Biểu diễn về mặt toán học, giá trị của b'ABC' đầu tiên sẽ được dịch qua trái 3 byte để tạo ra 3 byte trống phía sau, 3 byte = 24 bits. Do đó, giá trị của b'ABCABC' là m = f * 2²⁴ + f.
+Quay lại bài toán của chúng ta là flag có độ dài là 26 bytes = 208 bits. 
+Khi ta nối chuỗi flag vào một chuỗi khác, chúng ta đang dịch chuỗi cũ một khoảng bằng độ dài của flag, tức là dịch qua 26 bytes.
 
 Số nguyên m được tạo thành từ 1337 flag chính:
  -Khối flag cuối cùng (thứ 1337) là: f
