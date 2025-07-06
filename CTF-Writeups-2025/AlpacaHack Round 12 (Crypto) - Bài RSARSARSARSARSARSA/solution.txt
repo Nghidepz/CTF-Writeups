@@ -6,25 +6,14 @@ Challenge yêu cầu chúng ta phải tải file rsarsarsarsarsarsa.tar.gz rồi
 
 1. Phân tích
 
-Ta thấy source có vẻ khá bình thường nhưng nó có một dòng khả nghi và nó cũng chính là điểm mấu chốt để giải được bài này
-
-Ta thấy có dòng này:
-
+Ta thấy source có vẻ khá bình thường nhưng nó có một dòng khả nghi và nó cũng chính là điểm mấu chốt để giải được bài này:
 	m = bytes_to_long((flag * 1337).encode())
 
 Flag được cho vào hàm đó để biến thành một số nguyên lớn nhưng nó còn được lặp đi lặp lại thêm 1337 lần nữa. Đó chính là điểm khó ở bài này
 
 2. Khai thác
 
-Ta có dòng code f = bytes_to_long(b'ABC')
-
-b'ABC' có độ dài là 3 bytes. Thì để tạo ra b'ABCABC' chúng ta phải nối b'ABC' vào sau b'ABC'. Biểu diễn về mặt toán học, giá trị của b'ABC' đầu tiên sẽ được dịch qua trái 3 byte để tạo ra 3 byte trống phía sau. 3 byte = 24 bits
-
-Do đó, giá trị của b'ABCABC' là m = f * 2²⁴ + f
-
-Quay lại bài toán của chúng ta là flag có độ dài là 26 bytes = 208 bits
-
-Khi ta nối chuỗi flag vào một chuỗi khác, chúng ta đang dịch chuỗi cũ một khoảng bằng độ dài của flag, tức là dịch qua 26 bytes.
+Ta có dòng code f = bytes_to_long(b'ABC'), b'ABC' có độ dài là 3 bytes. Thì để tạo ra b'ABCABC' chúng ta phải nối b'ABC' vào sau b'ABC'. Biểu diễn về mặt toán học, giá trị của b'ABC' đầu tiên sẽ được dịch qua trái 3 byte để tạo ra 3 byte trống phía sau, 3 byte = 24 bits. Do đó, giá trị của b'ABCABC' là m = f * 2²⁴ + f. Quay lại bài toán của chúng ta là flag có độ dài là 26 bytes = 208 bits. Khi ta nối chuỗi flag vào một chuỗi khác, chúng ta đang dịch chuỗi cũ một khoảng bằng độ dài của flag, tức là dịch qua 26 bytes.
 
 Số nguyên m được tạo thành từ 1337 flag chính:
  -Khối flag cuối cùng (thứ 1337) là: f
@@ -40,49 +29,34 @@ Rút f làm thừa số chung => m = f * ((2²⁰⁸)¹³³⁶+(2²⁰⁸)¹³³
 Biểu thức trong ngoặc là tổng của một chuỗi cấp số nhân: a = 1, r = 2²⁰⁸, n = 1337
 
 Công thức tổng cấp số nhân là: S = a * (rⁿ - 1) / (r - 1)
-
 => Tổng = 1 * ((2²⁰⁸)¹³³⁷-1)/(2²⁰⁸-1)
-
 Đặt k = ((2²⁰⁸)¹³³⁷-1)//(2²⁰⁸-1)
-
 => m = f * k
 
-Ta đã biết được cấu trúc của m
-
-Bước tiếp theo là thay m vào phương trình mã hóa của RSA: c ≡ mᵉ (mod N)
-
+Ta đã biết được cấu trúc của m, bước tiếp theo là thay m vào phương trình mã hóa của RSA: c ≡ mᵉ (mod N)
 => c ≡ (f * k)ᵉ (mod N)
 => c ≡ fᵉ * kᵉ (mod N)
 
 Ta muốn tìm f nên phải cô lập f lại bằng cách nhân nghịch đảo Modulo
-
 => c * (kᵉ)⁻¹ ≡ fᵉ * kᵉ * (kᵉ)⁻¹ (mod N)
 => c * (kᵉ)⁻¹ ≡ fᵉ * 1 (mod N)
 
 Đặt c' là (c * (kᵉ)⁻¹ (mod N)) % N
-
 => c' ≡ fᵉ (mod N)
 
-Bước tiếp theo là phải loại bỏ phép toán Modulo
+Bước tiếp theo là phải loại bỏ phép toán Modulo, xét về kích thước ta có:
+	N = 4096 bits
+	f = 208 bits
+	e = 19
+	fᵉ là size_bits(f) * e = 208 * 19 = 3952 bits
 
-Xét về kích thước ta có
-
-N = 4096 bits
-f = 208 bits
-e = 19
-fᵉ là size_bits(f) * e = 208 * 19 = 3952 bits
-
-Có 3952 < 4096 nên có nghĩa là fᵉ sẽ nhỏ hơn giá trị của N => Khi lấy fᵉ chia cho N thì số dư cũng chính là fᵉ luôn
-
-Mà xét ý nghĩa của modulo thì A ≡ B (mod N) sẽ có nghĩa là A = B + k*N với k là một số nguyên nào đó
-
+Có 3952 < 4096 nên có nghĩa là fᵉ sẽ nhỏ hơn giá trị của N => Khi lấy fᵉ chia cho N thì số dư cũng chính là fᵉ luôn, mà xét ý nghĩa của modulo thì A ≡ B (mod N) sẽ có nghĩa là A = B + k*N với k là một số nguyên nào đó
 => c' = fᵉ + k*N, có fᵉ < N và c' < N (vì c' là kết quả của một phép mod N) => k chắc chắn phải là 0
-
 => c' = fᵉ
 
-Bước cuối cùng là khai căn để tìm ra được f
-
-Có c' = fᵉ => f = ᵉ√c
+Bước cuối cùng là khai căn để tìm ra được f 
+=> c' = fᵉ 
+=> f = ᵉ√c
 
 Vậy là đã tìm được f (flag)
 
