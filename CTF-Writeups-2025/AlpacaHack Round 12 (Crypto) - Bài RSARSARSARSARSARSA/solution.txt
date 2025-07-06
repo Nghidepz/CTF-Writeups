@@ -1,1 +1,97 @@
+🔍 Mô tả:
 
+Challenge yêu cầu chúng ta phải tải file rsarsarsarsarsarsa.tar.gz rồi giải nén ra hai file output.txt và chall.py. Trong file chall.py chứa source code python mô tả quá trình mã hóa bằng RSA để ra được dữ liệu đề bài cung cấp như ở file output.txt
+
+🛠️ Giải pháp:
+
+1. Phân tích
+
+Ta thấy source có vẻ khá bình thường nhưng nó có một dòng khả nghi và nó cũng chính là điểm mấu chốt để giải được bài này
+
+Ta thấy có dòng này:
+
+	m = bytes_to_long((flag * 1337).encode())
+
+Flag được cho vào hàm đó để biến thành một số nguyên lớn nhưng nó còn được lặp đi lặp lại thêm 1337 lần nữa. Đó chính là điểm khó ở bài này
+
+2. Khai thác
+
+Ta có dòng code f = bytes_to_long(b'ABC')
+
+b'ABC' có độ dài là 3 bytes. Thì để tạo ra b'ABCABC' chúng ta phải nối b'ABC' vào sau b'ABC'. Biểu diễn về mặt toán học, giá trị của b'ABC' đầu tiên sẽ được dịch qua trái 3 byte để tạo ra 3 byte trống phía sau. 3 byte = 24 bits
+
+Do đó, giá trị của b'ABCABC' là m = f * 2²⁴ + f
+
+Quay lại bài toán của chúng ta là flag có độ dài là 26 bytes = 208 bits
+
+Khi ta nối chuỗi flag vào một chuỗi khác, chúng ta đang dịch chuỗi cũ một khoảng bằng độ dài của flag, tức là dịch qua 26 bytes.
+
+Số nguyên m được tạo thành từ 1337 flag chính:
+ -Khối flag cuối cùng (thứ 1337) là: f
+ -Khối flag gần cuối (thứ 1336) được dịch qua 208 bits là: f * 2²⁰⁸
+ -Khối flag thứ 1335 được dịch qua 2*208 bits là: f * (2²⁰⁸)²
+ ...
+ -Khối flag đầu tiên (thứ 1) được dịch qua 1336*208 bits là: f * (2²⁰⁸)¹³³⁶
+ 
+Tổng hợp lại thì ta có: m = f * (2²⁰⁸)¹³³⁶ + f * (2²⁰⁸)¹³³⁵ + ... + f * 2²⁰⁸ + f
+
+Rút f làm thừa số chung => m = f * ((2²⁰⁸)¹³³⁶+(2²⁰⁸)¹³³⁵+...+(2²⁰⁸)¹+1)
+
+Biểu thức trong ngoặc là tổng của một chuỗi cấp số nhân: a = 1, r = 2²⁰⁸, n = 1337
+
+Công thức tổng cấp số nhân là: S = a * (rⁿ - 1) / (r - 1)
+
+=> Tổng = 1 * ((2²⁰⁸)¹³³⁷-1)/(2²⁰⁸-1)
+
+Đặt k = ((2²⁰⁸)¹³³⁷-1)//(2²⁰⁸-1)
+
+=> m = f * k
+
+Ta đã biết được cấu trúc của m
+
+Bước tiếp theo là thay m vào phương trình mã hóa của RSA: c ≡ mᵉ (mod N)
+
+=> c ≡ (f * k)ᵉ (mod N)
+=> c ≡ fᵉ * kᵉ (mod N)
+
+Ta muốn tìm f nên phải cô lập f lại bằng cách nhân nghịch đảo Modulo
+
+=> c * (kᵉ)⁻¹ ≡ fᵉ * kᵉ * (kᵉ)⁻¹ (mod N)
+=> c * (kᵉ)⁻¹ ≡ fᵉ * 1 (mod N)
+
+Đặt c' là (c * (kᵉ)⁻¹ (mod N)) % N
+
+=> c' ≡ fᵉ (mod N)
+
+Bước tiếp theo là phải loại bỏ phép toán Modulo
+
+Xét về kích thước ta có
+
+N = 4096 bits
+f = 208 bits
+e = 19
+fᵉ là size_bits(f) * e = 208 * 19 = 3952 bits
+
+Có 3952 < 4096 nên có nghĩa là fᵉ sẽ nhỏ hơn giá trị của N => Khi lấy fᵉ chia cho N thì số dư cũng chính là fᵉ luôn
+
+Mà xét ý nghĩa của modulo thì A ≡ B (mod N) sẽ có nghĩa là A = B + k*N với k là một số nguyên nào đó
+
+=> c' = fᵉ + k*N, có fᵉ < N và c' < N (vì c' là kết quả của một phép mod N) => k chắc chắn phải là 0
+
+=> c' = fᵉ
+
+Bước cuối cùng là khai căn để tìm ra được f
+
+Có c' = fᵉ => f = ᵉ√c
+
+Vậy là đã tìm được f (flag)
+
+3. Flag
+
+Alpaca{cryptocryptocrypto}
+
+4. Note
+
+Đây là cách giải của mình và cũng có thể là chưa tối ưu
+Để làm theo được cách của mình thì phải tư duy phân tích tốt và chú ý được ở chỗ code khả nghi
+Code ngắn nhưng bước phân tích thì dài
